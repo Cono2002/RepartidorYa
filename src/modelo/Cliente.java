@@ -1,24 +1,27 @@
 package modelo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Cliente extends Persona {
 
-    private int numeroPedido;
+    private String domicilio;
     private String telefono;
-    private String orden;
+    private List<Pedido> pedidos;
 
-    public Cliente(String nombre, String apellido, int numeroPedido, String telefono, String orden) {
+    public Cliente(String nombre, String apellido, String domicilio, String telefono) {
         super(nombre, apellido);
-        this.numeroPedido = numeroPedido;
+        this.domicilio = domicilio;
         this.telefono = telefono;
-        this.orden = orden;
+        this.pedidos = new ArrayList<>();
     }
 
-    public int getNumeroPedido() {
-        return numeroPedido;
+    public String getDomicilio() {
+        return domicilio;
     }
 
-    public void setNumeroPedido(int numeroPedido) {
-        this.numeroPedido = numeroPedido;
+    public void setDomicilio(String domicilio) {
+        this.domicilio = domicilio;
     }
 
     public String getTelefono() {
@@ -29,11 +32,11 @@ public class Cliente extends Persona {
         this.telefono = telefono;
     }
 
-    public String getOrden() {
-        return orden;
+    public List<Pedido> getPedidos() {
+        return pedidos;
     }
 
-    public void setOrden(String orden) {
-        this.orden = orden;
+    public void agregarPedido(Pedido pedido) {
+        pedidos.add(pedido);
     }
 }
