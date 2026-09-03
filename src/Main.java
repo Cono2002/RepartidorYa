@@ -1,7 +1,12 @@
+import java.util.Arrays;
+import java.util.List;
+
+import modelo.Chat;
 import modelo.Cliente;
 import modelo.ItemPedido;
 import modelo.Pedido;
 import modelo.TipoProducto;
+import modelo.Vendedor;
 
 public class Main {
 
@@ -25,5 +30,45 @@ public class Main {
         System.out.println("Costo delivery: $" + pedido.getCostoDelivery());
         System.out.println("Gasto total: $" + pedido.calcularGastoTotal());
         System.out.println("Pedidos del cliente: " + cliente.getPedidos().size());
+
+        System.out.println();
+        System.out.println("=== Prueba 1: vendedor preferido disponible ===");
+        probarContactoVendedor(
+                cliente,
+                new Vendedor("Ana", "Gomez", true),
+                Arrays.asList(
+                        new Vendedor("Luis", "Diaz", false),
+                        new Vendedor("Marta", "Ruiz", true)));
+
+        System.out.println();
+        System.out.println("=== Prueba 2: vendedor preferido no disponible, pero hay otro disponible ===");
+        probarContactoVendedor(
+                cliente,
+                new Vendedor("Ana", "Gomez", false),
+                Arrays.asList(
+                        new Vendedor("Luis", "Diaz", false),
+                        new Vendedor("Marta", "Ruiz", true)));
+
+        System.out.println();
+        System.out.println("=== Prueba 3: ningún vendedor disponible ===");
+        probarContactoVendedor(
+                cliente,
+                new Vendedor("Ana", "Gomez", false),
+                Arrays.asList(
+                        new Vendedor("Luis", "Diaz", false),
+                        new Vendedor("Marta", "Ruiz", false)));
+    }
+
+    private static void probarContactoVendedor(Cliente cliente, Vendedor preferido, List<Vendedor> vendedores) {
+        Chat chat = new Chat(cliente);
+        chat.contactarVendedor(preferido, vendedores);
+
+        Vendedor asignado = chat.getVendedor();
+        if (asignado != null) {
+            System.out.println("Vendedor asignado: " + asignado.getNombre() + " " + asignado.getApellido()
+                    + " (disponible: " + asignado.isDisponibilidad() + ")");
+        } else {
+            System.out.println("Vendedor asignado: ninguno (no hay vendedores disponibles)");
+        }
     }
 }
