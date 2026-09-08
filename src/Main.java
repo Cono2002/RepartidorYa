@@ -8,12 +8,13 @@ import modelo.Pedido;
 import modelo.PedidoRepositorio;
 import modelo.TipoProducto;
 import modelo.TipoProductoRepositorio;
+import modelo.TipoProductoRepositorioMemoria;
 import modelo.Vendedor;
 
 public class Main {
 
     public static void main(String[] args) {
-        TipoProductoRepositorio productoRepositorio = new TipoProductoRepositorio();
+        TipoProductoRepositorio productoRepositorio = new TipoProductoRepositorioMemoria();
         productoRepositorio.guardar(new TipoProducto("Hamburguesa", 3500.0));
         productoRepositorio.guardar(new TipoProducto("Papas fritas", 1800.0));
 
