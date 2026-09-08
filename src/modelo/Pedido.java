@@ -12,9 +12,8 @@ public class Pedido {
     private int distancia;
     private Estado estado;
 
-    public Pedido(Cliente cliente, int numeroPedido, int distancia) {
+    public Pedido(Cliente cliente, int distancia) {
         this.cliente = cliente;
-        this.numeroPedido = numeroPedido;
         this.distancia = distancia;
         this.items = new ArrayList<>();
         this.costoDelivery = calcularEnvio(distancia);
@@ -44,6 +43,10 @@ public class Pedido {
 
     public int getNumeroPedido() {
         return numeroPedido;
+    }
+
+    public void setNumeroPedido(int numeroPedido) {
+        this.numeroPedido = numeroPedido;
     }
 
     public List<ItemPedido> getItems() {

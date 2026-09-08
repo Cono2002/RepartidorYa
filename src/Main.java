@@ -5,22 +5,37 @@ import modelo.Chat;
 import modelo.Cliente;
 import modelo.ItemPedido;
 import modelo.Pedido;
+import modelo.PedidoRepositorio;
 import modelo.TipoProducto;
+import modelo.TipoProductoRepositorio;
 import modelo.Vendedor;
 
 public class Main {
 
     public static void main(String[] args) {
+        TipoProductoRepositorio productoRepositorio = new TipoProductoRepositorio();
+        productoRepositorio.guardar(new TipoProducto("Hamburguesa", 3500.0));
+        productoRepositorio.guardar(new TipoProducto("Papas fritas", 1800.0));
+
+        PedidoRepositorio pedidoRepositorio = new PedidoRepositorio();
+
         Cliente cliente = new Cliente("Juan", "Perez", "Calle Falsa 123", "1122334455");
 
-        Pedido pedido = new Pedido(cliente, 1, 2500);
-        cliente.agregarPedido(pedido);
+        Pedido pedido = new Pedido(cliente, 2500);
+        pedidoRepositorio.guardar(pedido);
 
-        TipoProducto hamburguesa = new TipoProducto("Hamburguesa", 3500.0);
-        TipoProducto papas = new TipoProducto("Papas fritas", 1800.0);
+        productoRepositorio.buscarPorNombre("Hamburguesa")
+                .ifPresent(producto -> pedido.agregarItem(new ItemPedido(producto, 2)));
 
-        pedido.agregarItem(new ItemPedido(hamburguesa, 2));
-        pedido.agregarItem(new ItemPedido(papas, 1));
+        productoRepositorio.buscarPorNombre("Papas Fritas")
+                .ifPresentOrElse(
+                        producto -> pedido.agregarItem(new ItemPedido(producto, 1)),
+                        () -> System.out.println("No encontramos ese producto en el catálogo"));
+
+        productoRepositorio.buscarPorNombre("Empanadas")
+                .ifPresentOrElse(
+                        producto -> pedido.agregarItem(new ItemPedido(producto, 1)),
+                        () -> System.out.println("No encontramos 'Empanadas' en el catálogo."));
 
         System.out.println("Cliente: " + cliente.getNombre() + " " + cliente.getApellido());
         System.out.println("Domicilio: " + cliente.getDomicilio());
@@ -30,6 +45,7 @@ public class Main {
         System.out.println("Costo delivery: $" + pedido.getCostoDelivery());
         System.out.println("Gasto total: $" + pedido.calcularGastoTotal());
         System.out.println("Pedidos del cliente: " + cliente.getPedidos().size());
+        System.out.println("Pedidos en el repositorio: " + pedidoRepositorio.listarTodos().size());
 
         System.out.println();
         System.out.println("=== Prueba 1: vendedor preferido disponible ===");
