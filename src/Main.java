@@ -6,6 +6,7 @@ import modelo.Cliente;
 import modelo.ItemPedido;
 import modelo.Pedido;
 import modelo.PedidoRepositorio;
+import modelo.PedidoRepositorioMemoria;
 import modelo.TipoProducto;
 import modelo.TipoProductoRepositorio;
 import modelo.TipoProductoRepositorioMemoria;
@@ -18,7 +19,7 @@ public class Main {
         productoRepositorio.guardar(new TipoProducto("Hamburguesa", 3500.0));
         productoRepositorio.guardar(new TipoProducto("Papas fritas", 1800.0));
 
-        PedidoRepositorio pedidoRepositorio = new PedidoRepositorio();
+        PedidoRepositorio pedidoRepositorio = new PedidoRepositorioMemoria();
 
         Cliente cliente = new Cliente("Juan", "Perez", "Calle Falsa 123", "1122334455");
 
