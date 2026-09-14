@@ -1,5 +1,6 @@
 package modelo;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ public class Pedido {
     private double costoDelivery;
     private int distancia;
     private Estado estado;
+    private LocalDate fecha;
 
     public Pedido(Cliente cliente, int distancia) {
         this.cliente = cliente;
@@ -18,6 +20,7 @@ public class Pedido {
         this.items = new ArrayList<>();
         this.costoDelivery = calcularEnvio(distancia);
         this.estado = Estado.EN_PROCESO;
+        this.fecha = LocalDate.now();
     }
 
     public double calcularEnvio(int distancia) {
@@ -72,5 +75,13 @@ public class Pedido {
 
     public void setEstado(Estado estado) {
         this.estado = estado;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
     }
 }

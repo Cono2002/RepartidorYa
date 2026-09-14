@@ -3,6 +3,7 @@ package modelo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -14,7 +15,8 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
     private final ClienteRepositorio clienteRepositorio;
     private final TipoProductoRepositorio productoRepositorio;
     private List<Pedido> pedidos;
-    private int ultimoNumeroUsado = 0;
+    private int contadorDelDia = 0;
+    private LocalDate fechaContador = null;
 
     public PedidoRepositorioJson(String rutaArchivo, ClienteRepositorio clienteRepositorio,
             TipoProductoRepositorio productoRepositorio) {
@@ -22,11 +24,14 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
         this.clienteRepositorio = clienteRepositorio;
         this.productoRepositorio = productoRepositorio;
         this.pedidos = cargarDesdeArchivo();
+
+        LocalDate hoy = LocalDate.now();
         for (Pedido p : pedidos) {
-            if (p.getNumeroPedido() > ultimoNumeroUsado) {
-                ultimoNumeroUsado = p.getNumeroPedido();
+            if (p.getFecha().equals(hoy) && p.getNumeroPedido() > contadorDelDia) {
+                contadorDelDia = p.getNumeroPedido();
             }
         }
+        fechaContador = hoy;
     }
 
     private List<Pedido> cargarDesdeArchivo() {
@@ -40,7 +45,8 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
 
             Pattern patronPedido = Pattern.compile(
                     "\\{\\s*\"numeroPedido\":\\s*(\\d+),\\s*\"clienteTelefono\":\\s*\"([^\"]*)\",\\s*"
-                            + "\"distancia\":\\s*(\\d+),\\s*\"estado\":\\s*\"([^\"]*)\",\\s*\"items\":\\s*\\[(.*?)\\]\\s*\\}",
+                            + "\"distancia\":\\s*(\\d+),\\s*\"fecha\":\\s*\"([^\"]*)\",\\s*"
+                            + "\"estado\":\\s*\"([^\"]*)\",\\s*\"items\":\\s*\\[(.*?)\\]\\s*\\}",
                     Pattern.DOTALL);
             Pattern patronItem = Pattern.compile("\\{\"producto\":\\s*\"([^\"]*)\",\\s*\"cantidad\":\\s*(\\d+)\\}");
 
@@ -49,8 +55,9 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
                 int numeroPedido = Integer.parseInt(matcherPedido.group(1));
                 String telefono = matcherPedido.group(2);
                 int distancia = Integer.parseInt(matcherPedido.group(3));
-                String estadoTexto = matcherPedido.group(4);
-                String itemsTexto = matcherPedido.group(5);
+                LocalDate fecha = LocalDate.parse(matcherPedido.group(4));
+                String estadoTexto = matcherPedido.group(5);
+                String itemsTexto = matcherPedido.group(6);
 
                 var clienteOpt = clienteRepositorio.buscarPorTelefono(telefono);
                 if (clienteOpt.isEmpty()) {
@@ -61,6 +68,7 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
 
                 Pedido pedido = new Pedido(clienteOpt.get(), distancia);
                 pedido.setNumeroPedido(numeroPedido);
+                pedido.setFecha(fecha);
                 pedido.setEstado(Estado.valueOf(estadoTexto));
 
                 Matcher matcherItem = patronItem.matcher(itemsTexto);
@@ -83,8 +91,14 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
     }
 
     public void guardar(Pedido pedido) {
-        ultimoNumeroUsado++;
-        pedido.setNumeroPedido(ultimoNumeroUsado);
+        LocalDate hoy = LocalDate.now();
+        if (!hoy.equals(fechaContador)) {
+            contadorDelDia = 0;
+            fechaContador = hoy;
+        }
+        contadorDelDia++;
+        pedido.setNumeroPedido(contadorDelDia);
+
         pedidos.add(pedido);
         guardarEnArchivo();
     }
@@ -101,6 +115,7 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
             json.append("    \"numeroPedido\": ").append(p.getNumeroPedido()).append(",\n");
             json.append("    \"clienteTelefono\": \"").append(p.getCliente().getTelefono()).append("\",\n");
             json.append("    \"distancia\": ").append(p.getDistancia()).append(",\n");
+            json.append("    \"fecha\": \"").append(p.getFecha()).append("\",\n");
             json.append("    \"estado\": \"").append(p.getEstado().name()).append("\",\n");
             json.append("    \"items\": [");
 
