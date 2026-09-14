@@ -5,20 +5,86 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PedidoRepositorioJson implements PedidoRepositorio {
 
     private final Path archivo;
-    private List<Pedido> pedidos = new ArrayList<>();
+    private final ClienteRepositorio clienteRepositorio;
+    private final TipoProductoRepositorio productoRepositorio;
+    private List<Pedido> pedidos;
+    private int ultimoNumeroUsado = 0;
 
-    public PedidoRepositorioJson(String rutaArchivo) {
+    public PedidoRepositorioJson(String rutaArchivo, ClienteRepositorio clienteRepositorio,
+            TipoProductoRepositorio productoRepositorio) {
         this.archivo = Path.of(rutaArchivo);
-        // Ojo: todavía no reconstruimos los Pedidos completos al arrancar el programa.
-        // Para eso necesitaríamos poder buscar el Cliente real a partir del teléfono
-        // guardado, y eso requiere un ClienteRepositorio que todavía no armamos.
+        this.clienteRepositorio = clienteRepositorio;
+        this.productoRepositorio = productoRepositorio;
+        this.pedidos = cargarDesdeArchivo();
+        for (Pedido p : pedidos) {
+            if (p.getNumeroPedido() > ultimoNumeroUsado) {
+                ultimoNumeroUsado = p.getNumeroPedido();
+            }
+        }
+    }
+
+    private List<Pedido> cargarDesdeArchivo() {
+        List<Pedido> lista = new ArrayList<>();
+        if (!Files.exists(archivo)) {
+            return lista;
+        }
+
+        try {
+            String contenido = Files.readString(archivo);
+
+            Pattern patronPedido = Pattern.compile(
+                    "\\{\\s*\"numeroPedido\":\\s*(\\d+),\\s*\"clienteTelefono\":\\s*\"([^\"]*)\",\\s*"
+                            + "\"distancia\":\\s*(\\d+),\\s*\"estado\":\\s*\"([^\"]*)\",\\s*\"items\":\\s*\\[(.*?)\\]\\s*\\}",
+                    Pattern.DOTALL);
+            Pattern patronItem = Pattern.compile("\\{\"producto\":\\s*\"([^\"]*)\",\\s*\"cantidad\":\\s*(\\d+)\\}");
+
+            Matcher matcherPedido = patronPedido.matcher(contenido);
+            while (matcherPedido.find()) {
+                int numeroPedido = Integer.parseInt(matcherPedido.group(1));
+                String telefono = matcherPedido.group(2);
+                int distancia = Integer.parseInt(matcherPedido.group(3));
+                String estadoTexto = matcherPedido.group(4);
+                String itemsTexto = matcherPedido.group(5);
+
+                var clienteOpt = clienteRepositorio.buscarPorTelefono(telefono);
+                if (clienteOpt.isEmpty()) {
+                    System.out.println("Aviso: no se encontró un cliente con teléfono " + telefono
+                            + ", se omite el pedido #" + numeroPedido);
+                    continue;
+                }
+
+                Pedido pedido = new Pedido(clienteOpt.get(), distancia);
+                pedido.setNumeroPedido(numeroPedido);
+                pedido.setEstado(Estado.valueOf(estadoTexto));
+
+                Matcher matcherItem = patronItem.matcher(itemsTexto);
+                while (matcherItem.find()) {
+                    String nombreProducto = matcherItem.group(1);
+                    int cantidad = Integer.parseInt(matcherItem.group(2));
+
+                    productoRepositorio.buscarPorNombre(nombreProducto).ifPresentOrElse(
+                            producto -> pedido.agregarItem(new ItemPedido(producto, cantidad)),
+                            () -> System.out.println("Aviso: no se encontró el producto '" + nombreProducto
+                                    + "' al cargar el pedido #" + numeroPedido));
+                }
+
+                lista.add(pedido);
+            }
+        } catch (IOException e) {
+            System.out.println("No se pudo leer pedidos.json: " + e.getMessage());
+        }
+        return lista;
     }
 
     public void guardar(Pedido pedido) {
+        ultimoNumeroUsado++;
+        pedido.setNumeroPedido(ultimoNumeroUsado);
         pedidos.add(pedido);
         guardarEnArchivo();
     }
@@ -34,6 +100,7 @@ public class PedidoRepositorioJson implements PedidoRepositorio {
             json.append("  {\n");
             json.append("    \"numeroPedido\": ").append(p.getNumeroPedido()).append(",\n");
             json.append("    \"clienteTelefono\": \"").append(p.getCliente().getTelefono()).append("\",\n");
+            json.append("    \"distancia\": ").append(p.getDistancia()).append(",\n");
             json.append("    \"estado\": \"").append(p.getEstado().name()).append("\",\n");
             json.append("    \"items\": [");
 
