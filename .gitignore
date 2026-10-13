@@ -1,3 +1,4 @@
 out/
 *.class
 src/productos.json
+lib/*.jar
