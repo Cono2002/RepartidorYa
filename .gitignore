@@ -2,3 +2,4 @@ out/
 *.class
 src/productos.json
 lib/*.jar
+config/db.properties
